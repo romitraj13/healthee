@@ -215,8 +215,80 @@ services:
     networks:
       - healthee-net
 
+  # ── GoTrue (self-hosted Supabase auth) ─────────────────────────────────
+  # The identity provider. The healthee server only VERIFIES the access JWT it
+  # issues (HS256 against SUPABASE_JWT_SECRET); it never touches GoTrue's DB,
+  # storage or realtime. Self-hosted so the only thing leaving the box is the
+  # LLM call. The app reaches it at `$SUPABASE_URL/auth/v1`, which tailscale
+  # serve routes here (see infra/DEPLOY.md) — no healthee code change.
+  gotrue-db:
+    image: postgres:17-alpine
+    container_name: healthee-gotrue-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${GOTRUE_DB_USER:-gotrue}
+      POSTGRES_PASSWORD: ${GOTRUE_DB_PASSWORD}
+      POSTGRES_DB: ${GOTRUE_DB_NAME:-gotrue}
+    volumes:
+      - healthee-gotrue-pgdata:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${GOTRUE_DB_USER:-gotrue} -d ${GOTRUE_DB_NAME:-gotrue}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - healthee-net
+
+  gotrue:
+    image: supabase/gotrue:v2.196.0
+    container_name: healthee-gotrue
+    restart: unless-stopped
+    depends_on:
+      gotrue-db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      # The external URL the app reaches it at (the tailscale hostname). Used for
+      # issuer + redirects; with MAILER_AUTOCONFIRM + password-only sign-in the
+      # redirects are unused, and the healthee server skips the iss check anyway.
+      API_EXTERNAL_URL: ${SUPABASE_URL}
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://${GOTRUE_DB_USER:-gotrue}:${GOTRUE_DB_PASSWORD}@gotrue-db:5432/${GOTRUE_DB_NAME:-gotrue}
+      GOTRUE_SITE_URL: ${SUPABASE_URL}
+      GOTRUE_URI_ALLOW_LIST: ${SUPABASE_URL}
+      # Signups stay open here; the healthee SERVER gates new app_user rows via
+      # SIGNUP_ALLOWLIST (MULTI_USER.md §4) — GoTrue is just the JWT issuer.
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: 3600
+      # MUST equal SUPABASE_JWT_SECRET — the healthee server verifies HS256 with it.
+      GOTRUE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      # Single-owner box: skip email confirmation so sign-up returns a session
+      # immediately (the app's signUp expects one, or it reports "needs confirmation").
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_SMTP_ADMIN_EMAIL: ${GOTRUE_SMTP_ADMIN_EMAIL:-}
+      GOTRUE_SMTP_HOST: ${GOTRUE_SMTP_HOST:-}
+      GOTRUE_SMTP_PORT: ${GOTRUE_SMTP_PORT:-}
+      GOTRUE_SMTP_USER: ${GOTRUE_SMTP_USER:-}
+      GOTRUE_SMTP_PASS: ${GOTRUE_SMTP_PASS:-}
+      GOTRUE_SMTP_SENDER_NAME: ${GOTRUE_SMTP_SENDER_NAME:-}
+    # Bound to localhost only — tailscale serve fronts it (same as the api).
+    ports:
+      - "127.0.0.1:9999:9999"
+    networks:
+      - healthee-net
+
 volumes:
   healthee-pgdata:
+  # GoTrue's own auth database — isolated from healthee's TimescaleDB so its
+  # `auth` schema and migrations never touch the health data.
+  healthee-gotrue-pgdata:
   # Public geodata only — SRTM elevation tiles and basemap tiles this box has
   # fetched. Nothing in here is an owner's data, and losing it costs a
   # re-download rather than a measurement. It exists because NOT having it cost

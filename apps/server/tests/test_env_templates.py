@@ -48,6 +48,9 @@ _DEPLOY_ONLY_VARS = frozenset(
         "BACKUP_DIR",  # infra/backup/pg_dump_backup.sh — where dumps are written
         "BACKUP_RETENTION_DAYS",  # …and how long they are kept
         "OFFBOX_CMD",  # …and the optional off-box copy command
+        "GOTRUE_DB_USER",  # compose only — the gotrue service's own Postgres user
+        "GOTRUE_DB_PASSWORD",  # compose only — the gotrue service's own Postgres password
+        "GOTRUE_DB_NAME",  # compose only — the gotrue service's own Postgres database
     }
 )
 
