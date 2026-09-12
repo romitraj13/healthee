@@ -130,7 +130,7 @@ def test_a_timeout_propagates_out_of_the_choke_point_and_is_never_an_empty_answe
 def test_a_timeout_is_reported_to_the_job_health_surface(monkeypatch: pytest.MonkeyPatch) -> None:
     """The supervisor turns the raised timeout into a logged + Telegrammed `failed`."""
     sent: list[str] = []
-    monkeypatch.setattr(chain, "send_telegram", lambda text, **_: sent.append(text) or True)
+    monkeypatch.setattr(chain, "send_matrix", lambda text, **_: sent.append(text) or True)
 
     def raiser() -> dict:
         raise _timeout_error()

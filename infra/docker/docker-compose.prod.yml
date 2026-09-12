@@ -103,9 +103,10 @@ services:
       API_HOST: 0.0.0.0
       API_PORT: 8765
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      # Telegram notifications (optional).
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      # Matrix notifications (optional).
+      MATRIX_HOMESERVER: ${MATRIX_HOMESERVER:-}
+      MATRIX_ACCESS_TOKEN: ${MATRIX_ACCESS_TOKEN:-}
+      MATRIX_ROOM_ID: ${MATRIX_ROOM_ID:-}
       # Public geodata caches, on the healthee-geocache volume below. The
       # elevation cache had NO volume and defaulted under /tmp, so every restart
       # re-downloaded the SRTM tiles this box had already fetched.
@@ -202,8 +203,9 @@ services:
       SELF_HOST_UNLOCKED: ${SELF_HOST_UNLOCKED:-false}
       PREMIUM_COACH_QUESTIONS: ${PREMIUM_COACH_QUESTIONS:-20}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      MATRIX_HOMESERVER: ${MATRIX_HOMESERVER:-}
+      MATRIX_ACCESS_TOKEN: ${MATRIX_ACCESS_TOKEN:-}
+      MATRIX_ROOM_ID: ${MATRIX_ROOM_ID:-}
       # The nightly re-derive resolves terrain elevation for GPS tracks, so this
       # container reads and writes the SAME SRTM cache as the api. Sharing the
       # volume is the point: two caches would download every tile twice.

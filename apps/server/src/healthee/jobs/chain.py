@@ -125,7 +125,7 @@ from uuid import UUID
 from healthee.core.db import tenant_transaction
 from healthee.core.entitlement import is_premium
 from healthee.core.logging import get_logger
-from healthee.core.notify import send_telegram
+from healthee.core.notify import send_matrix
 from healthee.core.tenancy import user_today
 from healthee.insights.client import LLMClient
 from healthee.jobs.steps import (
@@ -191,7 +191,7 @@ def _run_supervised(name: str, run: Callable[[], dict]) -> StepOutcome:
         detail = run()
     except Exception as exc:  # supervised boundary: report to the health surface, don't swallow
         log.exception("chain step '%s' failed", name)
-        send_telegram(f"chain step '{name}' failed: {exc}")
+        send_matrix(f"chain step '{name}' failed: {exc}")
         return StepOutcome(name=name, status="failed", error=str(exc))
     log.info("chain step '%s' ok: %s", name, detail)
     return StepOutcome(name=name, status="ok", detail=detail)

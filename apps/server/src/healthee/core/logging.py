@@ -36,8 +36,10 @@ def configure_logging(level: str | None = None) -> None:
     root.addHandler(handler)
     root.setLevel(resolved)
     # httpx logs every request line at INFO as `HTTP Request: POST <full url> ...`,
-    # and the Telegram bot token lives IN the URL path (api.telegram.org/bot<TOKEN>/…)
-    # — so at INFO it prints the secret into the scheduler log on every notification.
+    # and a secret can live in the URL path (a Telegram bot token did:
+    # api.telegram.org/bot<TOKEN>/…). Matrix keeps its access token in the
+    # Authorization header instead, but the pin stays as defence in depth — a
+    # request line is never something we want at INFO.
     # Pin its logger to WARNING regardless of the root level: we never want the
     # request line, and nothing we rely on lives below WARNING there.
     logging.getLogger("httpx").setLevel(logging.WARNING)

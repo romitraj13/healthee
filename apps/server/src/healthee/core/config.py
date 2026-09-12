@@ -292,9 +292,14 @@ class Settings(BaseSettings):
     map_tile_min_zoom: int = 1
     map_tile_max_zoom: int = 17
 
-    # ── Telegram notifications (optional — job status + failures) ─────────
-    telegram_bot_token: str = ""
-    telegram_chat_id: str = ""
+    # ── Matrix notifications (optional — job status + failures) ──────────
+    # The homeserver base URL (e.g. https://matrix.org), the access token of the
+    # bot/user that sends, and the room id to post into. The access token is a
+    # secret: it lives in env only and is sent in the Authorization header, never
+    # the URL, so it cannot leak into an httpx request-line log.
+    matrix_homeserver: str = ""
+    matrix_access_token: str = ""
+    matrix_room_id: str = ""
 
     # ── Logging ───────────────────────────────────────────────────────────
     log_level: str = "INFO"

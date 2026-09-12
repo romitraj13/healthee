@@ -39,7 +39,7 @@ _STEPS: tuple[str, ...] = ("illness", "challenges", "correlate", "recs", "warm",
 @pytest.fixture
 def marker(monkeypatch: pytest.MonkeyPatch) -> Iterator[set[str]]:
     """Back the dedup marker in memory and swallow the Telegram alerts."""
-    monkeypatch.setattr(chain, "send_telegram", lambda *_args, **_kw: True)
+    monkeypatch.setattr(chain, "send_matrix", lambda *_args, **_kw: True)
     monkeypatch.setattr(chain, "is_premium", lambda _user_id: True)
     marked: set[str] = set()
     monkeypatch.setattr(chain, "_chain_done", lambda _user_id, day: day.isoformat() in marked)

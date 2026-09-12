@@ -62,8 +62,8 @@ def bed(db: None, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:  # noqa: A
         sd.seed_daily(cur, "recovery_score", {d: 70.0 for d in days})
         sd.seed_daily(cur, "sleep_regularity_index", {d: 74.0 for d in days})
     entitle(SENTINEL_USER_ID, premium=True)
-    monkeypatch.setattr(briefing_mod, "send_telegram", lambda *_a, **_kw: True)
-    monkeypatch.setattr(chain, "send_telegram", lambda *_a, **_kw: True)
+    monkeypatch.setattr(briefing_mod, "send_matrix", lambda *_a, **_kw: True)
+    monkeypatch.setattr(chain, "send_matrix", lambda *_a, **_kw: True)
     monkeypatch.setenv("SUPABASE_JWT_SECRET", SECRET)
     monkeypatch.delenv("SUPABASE_PROJECT_REF", raising=False)
     get_settings.cache_clear()
@@ -125,7 +125,7 @@ def test_the_briefing_step_sends_the_warmed_body_and_spends_nothing(
     """The other half of the saving: with a warmed body the briefing costs zero calls."""
     stub = _stub(monkeypatch, StubLLM(json_text=_MERGED))
     sent: list[str] = []
-    monkeypatch.setattr(briefing_mod, "send_telegram", lambda msg: bool(sent.append(msg)) or True)
+    monkeypatch.setattr(briefing_mod, "send_matrix", lambda msg: bool(sent.append(msg)) or True)
     coaching.warm_morning(SENTINEL_USER_ID, SENTINEL_TZ)
 
     status = briefing_mod.send_briefing(SENTINEL_USER_ID, SENTINEL_TZ)
@@ -187,7 +187,7 @@ def test_a_merged_call_that_cannot_ship_darks_neither_surface(
     bad = json.dumps({"briefing": _BRIEFING_BODY, "action": "This suggests your fitness is low."})
     stub = _stub(monkeypatch, StubLLM([VALID_TEXT], json_text=bad))
     sent: list[str] = []
-    monkeypatch.setattr(briefing_mod, "send_telegram", lambda msg: bool(sent.append(msg)) or True)
+    monkeypatch.setattr(briefing_mod, "send_matrix", lambda msg: bool(sent.append(msg)) or True)
 
     warm = coaching.warm_lines(SENTINEL_USER_ID, SENTINEL_TZ)
     status = briefing_mod.send_briefing(SENTINEL_USER_ID, SENTINEL_TZ)
@@ -223,7 +223,7 @@ def test_the_briefing_still_generates_when_warm_never_ran(
     """
     stub = _stub(monkeypatch, StubLLM([VALID_TEXT]))
     sent: list[str] = []
-    monkeypatch.setattr(briefing_mod, "send_telegram", lambda msg: bool(sent.append(msg)) or True)
+    monkeypatch.setattr(briefing_mod, "send_matrix", lambda msg: bool(sent.append(msg)) or True)
 
     status = briefing_mod.send_briefing(SENTINEL_USER_ID, SENTINEL_TZ)
 

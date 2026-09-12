@@ -27,7 +27,7 @@ from datetime import date
 from uuid import UUID
 
 from healthee.core.logging import get_logger
-from healthee.core.notify import send_telegram
+from healthee.core.notify import send_matrix
 from healthee.core.tenancy import user_today
 from healthee.insights import coaching, morning
 from healthee.insights.client import LLMClient
@@ -80,7 +80,7 @@ def send_briefing(
     day = today
     warmed = coaching.cached_line(user_id, tz, coaching.MORNING_BRIEFING_KEY)
     body, status = _body(user_id, tz, warmed, client=client)
-    sent = send_telegram(_compose(day, body))
+    sent = send_matrix(_compose(day, body))
     log.info(
         "briefing[%s] %s: sent=%s source=%s validated=%s refused=%s",
         user_id,

@@ -38,7 +38,7 @@ def test_a_past_day_is_refused_before_anything_is_generated_or_sent(
 ) -> None:
     """THE finding. Today's judgement must not be sent under an older date."""
     monkeypatch.setattr(
-        briefing, "send_telegram", lambda *_a, **_k: pytest.fail("a refused day was sent")
+        briefing, "send_matrix", lambda *_a, **_k: pytest.fail("a refused day was sent")
     )
     yesterday = user_today(SENTINEL_TZ) - timedelta(days=1)
 
@@ -53,7 +53,7 @@ def test_a_past_day_is_refused_before_anything_is_generated_or_sent(
 def test_a_future_day_is_refused_too(monkeypatch: pytest.MonkeyPatch) -> None:
     """The mirror. A briefing dated tomorrow is a claim about a day that has not been."""
     monkeypatch.setattr(
-        briefing, "send_telegram", lambda *_a, **_k: pytest.fail("a refused day was sent")
+        briefing, "send_matrix", lambda *_a, **_k: pytest.fail("a refused day was sent")
     )
     with pytest.raises(ValueError):
         briefing.send_briefing(
@@ -92,7 +92,7 @@ def test_no_day_at_all_is_still_the_owners_today(monkeypatch: pytest.MonkeyPatch
         lambda *_a: reached.append("cached_line") or "warmed body",
     )
     sent: list[str] = []
-    monkeypatch.setattr(briefing, "send_telegram", lambda text: sent.append(text) or True)
+    monkeypatch.setattr(briefing, "send_matrix", lambda text: sent.append(text) or True)
 
     result = briefing.send_briefing(SENTINEL_USER_ID, SENTINEL_TZ)
 

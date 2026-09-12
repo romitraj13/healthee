@@ -23,7 +23,7 @@ def test_defaults_apply_when_only_required_var_set(
         "POSTGRES_DB",
         "POSTGRES_USER",
         "OPENROUTER_API_KEY",
-        "TELEGRAM_BOT_TOKEN",
+        "MATRIX_ACCESS_TOKEN",
     ):
         monkeypatch.delenv(var, raising=False)
     get_settings.cache_clear()
@@ -35,7 +35,7 @@ def test_defaults_apply_when_only_required_var_set(
     assert settings.log_level == "INFO"
     # Optional integrations default to empty (they no-op when blank).
     assert settings.openrouter_api_key == ""
-    assert settings.telegram_bot_token == ""
+    assert settings.matrix_access_token == ""
 
 
 def test_env_vars_override_defaults(monkeypatch: pytest.MonkeyPatch) -> None:

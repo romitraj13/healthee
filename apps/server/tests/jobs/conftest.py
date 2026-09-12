@@ -29,5 +29,5 @@ def fake_chain(monkeypatch: pytest.MonkeyPatch) -> FakeChain:
 def notices(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     """Every Telegram the sweep sends, in order — the health surface as a list."""
     sent: list[str] = []
-    monkeypatch.setattr(scheduler, "send_telegram", lambda text, **_: sent.append(text) or True)
+    monkeypatch.setattr(scheduler, "send_matrix", lambda text, **_: sent.append(text) or True)
     return sent

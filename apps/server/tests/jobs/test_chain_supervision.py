@@ -43,7 +43,7 @@ _TZ = "Asia/Kolkata"
 def notices(monkeypatch: pytest.MonkeyPatch) -> Iterator[list[str]]:
     """Capture Telegram notifications, back the dedup marker + entitlement in memory."""
     sent: list[str] = []
-    monkeypatch.setattr(chain, "send_telegram", lambda text, **_: sent.append(text) or True)
+    monkeypatch.setattr(chain, "send_matrix", lambda text, **_: sent.append(text) or True)
     monkeypatch.setattr(chain, "is_premium", lambda _user_id: True)
     marker: set[str] = set()
     monkeypatch.setattr(chain, "_chain_done", lambda _user_id, day: day.isoformat() in marker)

@@ -14,7 +14,7 @@ Four properties, each of which the incident or the fix depends on:
 3. **The balance warns BEFORE zero**, on a probe that spends no tokens.
 4. **A failed balance probe is reported as unknown**, never as fine.
 
-No network: `send_telegram` is replaced and the credits probe is stubbed.
+No network: `send_matrix` is replaced and the credits probe is stubbed.
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ class _StatusError(Exception):
 def sent(monkeypatch: pytest.MonkeyPatch) -> Iterator[list[str]]:
     """Capture what would have gone to Telegram, and give each test a clean record."""
     messages: list[str] = []
-    monkeypatch.setattr(llm_watch, "send_telegram", lambda text, **_kw: bool(messages.append(text)))
+    monkeypatch.setattr(llm_watch, "send_matrix", lambda text, **_kw: bool(messages.append(text)))
     monkeypatch.setenv("POSTGRES_PASSWORD", "unit-test-pw")
     monkeypatch.delenv("LLM_LOW_BALANCE_USD", raising=False)
     get_settings.cache_clear()

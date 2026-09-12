@@ -39,8 +39,8 @@ def chain_bed(db: None, monkeypatch: pytest.MonkeyPatch) -> Iterator[StubLLM]:  
     """A seeded owner, a counting LLM stub, and Telegram silenced."""
     client = StubLLM()
     monkeypatch.setattr(grounded, "get_client", lambda: client)
-    monkeypatch.setattr(chain, "send_telegram", lambda *_a, **_kw: True)
-    monkeypatch.setattr(briefing, "send_telegram", lambda *_a, **_kw: True)
+    monkeypatch.setattr(chain, "send_matrix", lambda *_a, **_kw: True)
+    monkeypatch.setattr(briefing, "send_matrix", lambda *_a, **_kw: True)
     seed_all()
     yield client
 

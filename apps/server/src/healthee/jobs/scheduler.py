@@ -92,7 +92,7 @@ from zoneinfo import ZoneInfo
 
 from healthee.core.entitlement import warn_if_self_host_unlocked
 from healthee.core.logging import configure_logging, get_logger
-from healthee.core.notify import send_telegram
+from healthee.core.notify import send_matrix
 from healthee.core.tenancy import Tenant, active_users
 from healthee.jobs import chain
 from healthee.jobs.data_gate import day_data_arrived
@@ -257,7 +257,7 @@ class Sweeper:
             return self._attempt(tenant, day), day
         except Exception as exc:  # supervised: report, then continue the sweep
             log.exception("chain failed for owner %s", tenant.id)
-            send_telegram(f"chain failed for owner {tenant.id}: {exc}")
+            send_matrix(f"chain failed for owner {tenant.id}: {exc}")
             if day is not None:
                 self._spend(tenant, day)
             return "failed", day
@@ -281,7 +281,7 @@ class Sweeper:
             log.warning(
                 "chain budget spent for owner %s on %s — no more retries today", tenant.id, day
             )
-            send_telegram(
+            send_matrix(
                 f"chain for owner {tenant.id} exhausted its {self._budget} attempts "
                 f"for {day} — no further retries until tomorrow"
             )
@@ -306,7 +306,7 @@ class Sweeper:
             return
         self._quiet_reported.add(key)
         log.warning("no data has arrived for owner %s on %s — no chain run", tenant.id, day)
-        send_telegram(
+        send_matrix(
             f"no data has arrived for owner {tenant.id} on {day} — their daily chain "
             f"has not run. Nothing measured on that day has reached the server."
         )

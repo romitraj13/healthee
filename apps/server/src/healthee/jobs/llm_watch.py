@@ -30,7 +30,7 @@ provider outage, a network partition.
 
 ## Why a scheduler tick and not the request path
 
-``send_telegram`` is a synchronous HTTP POST with a 10 s timeout. On a request path that
+``send_matrix`` is a synchronous HTTP POST with a 10 s timeout. On a request path that
 is latency somebody pays for, on an error path it is latency somebody pays for while
 already having a bad time. The scheduler is a loop that already wakes on a timer and
 already owns the Telegram health surface, so the alert costs nothing anybody is waiting
@@ -55,7 +55,7 @@ import time
 
 from healthee.core.config import get_settings
 from healthee.core.logging import get_logger
-from healthee.core.notify import send_telegram
+from healthee.core.notify import send_matrix
 from healthee.insights import credits, transport_health
 
 log = get_logger(__name__)
@@ -108,7 +108,7 @@ class LlmWatch:
     def check(self, now_monotonic: float | None = None) -> None:
         """One pass over both signals. Called from the scheduler's tick; never raises.
 
-        ``send_telegram`` is already no-raise by contract, and both readers below are
+        ``send_matrix`` is already no-raise by contract, and both readers below are
         pure/no-raise, so there is nothing here to swallow — the module deliberately has
         no ``try`` of its own, because a bare guard around a health check is how a health
         check starts failing quietly.
@@ -121,11 +121,11 @@ class LlmWatch:
     def _check_transport(self) -> None:
         health = transport_health.snapshot()
         if health.status == transport_health.DOWN and not self._transport_alerted:
-            send_telegram(_down_text(health))
+            send_matrix(_down_text(health))
             self._transport_alerted = True
             return
         if health.status == transport_health.OK and self._transport_alerted:
-            send_telegram(_RECOVERED_ALERT)
+            send_matrix(_RECOVERED_ALERT)
             self._transport_alerted = False
 
     # ── the balance signal ────────────────────────────────────────────────────
@@ -151,10 +151,10 @@ class LlmWatch:
             return  # already said this; edge-triggered, not level-triggered
         if state == credits.BALANCE_OK:
             if self._balance_alerted is not None:
-                send_telegram(_BALANCE_OK_ALERT.format(remaining=reading.remaining_usd or 0.0))
+                send_matrix(_BALANCE_OK_ALERT.format(remaining=reading.remaining_usd or 0.0))
             self._balance_alerted = None
             return
-        send_telegram(_balance_text(state, reading))
+        send_matrix(_balance_text(state, reading))
         self._balance_alerted = state
 
 
