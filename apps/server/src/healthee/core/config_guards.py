@@ -144,10 +144,10 @@ def require_model_ids_when_ai_key_is_set(
     ]
     if blank:
         raise ValueError(
-            f"OPENROUTER_API_KEY is set but {' and '.join(blank)} is blank — a blank "
-            "model id reaches OpenRouter verbatim and every LLM call returns 400, "
-            "with nothing failing in /healthz. Set the model id(s), or unset "
-            "OPENROUTER_API_KEY to run without the AI layer."
+            f"an LLM API key is set but {' and '.join(blank)} is blank — a blank "
+            "model id reaches the provider verbatim and every LLM call returns 400, "
+            "with nothing failing in /healthz. Set the model id(s), or unset the "
+            "LLM key (LLM_API_KEY / OPENROUTER_API_KEY) to run without the AI layer."
         )
 
 

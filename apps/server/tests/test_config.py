@@ -198,3 +198,47 @@ def test_missing_password_is_a_loud_failure(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_get_settings_is_cached(env: None) -> None:  # noqa: ARG001
     assert get_settings() is get_settings()
+
+
+# ── provider-agnostic LLM key + base URL (self-host / Ollama Cloud) ─────────
+
+
+def test_llm_base_url_defaults_to_openrouter(env: None) -> None:  # noqa: ARG001
+    assert Settings().llm_base_url == "https://openrouter.ai/api/v1"
+
+
+def test_llm_api_key_wins_over_openrouter_key(
+    env: None,  # noqa: ARG001
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("LLM_API_KEY", "ollama-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-x")
+    monkeypatch.setenv("DEFAULT_MODEL", "cheap")
+    monkeypatch.setenv("COACH_MODEL", "strong")
+    assert Settings().effective_llm_api_key() == "ollama-key"
+
+
+def test_effective_key_falls_back_to_openrouter_key(
+    env: None,  # noqa: ARG001
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-x")
+    monkeypatch.setenv("DEFAULT_MODEL", "cheap")
+    monkeypatch.setenv("COACH_MODEL", "strong")
+    assert Settings().effective_llm_api_key() == "sk-or-x"
+
+
+def test_effective_key_is_blank_without_any_key(env: None) -> None:  # noqa: ARG001
+    assert Settings().effective_llm_api_key() == ""
+
+
+def test_llm_api_key_alone_drives_the_model_id_guard(
+    env: None,  # noqa: ARG001
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The provider-agnostic key must trigger the same fail-fast as the legacy one."""
+    monkeypatch.setenv("LLM_API_KEY", "ollama-key")
+    monkeypatch.setenv("DEFAULT_MODEL", "some-model")
+    monkeypatch.delenv("COACH_MODEL", raising=False)
+    with pytest.raises(ValueError, match="COACH_MODEL"):
+        Settings()

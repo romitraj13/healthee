@@ -152,7 +152,15 @@ class Settings(BaseSettings):
     # the hosted one's moves when [D4] is decided.
     upgrade_url: str = ""
 
-    # ── OpenRouter (optional — grounded LLM insights, wired in a later WP) ─
+    # ── LLM provider (optional — grounded LLM insights) ───────────────────
+    # The OpenAI-compatible endpoint the LLM client points at. Defaults to OpenRouter
+    # (the original provider); a self-hoster repoints it at any OpenAI-compatible
+    # gateway — e.g. Ollama Cloud (`https://ollama.com/v1`) — with no code change.
+    llm_base_url: str = "https://openrouter.ai/api/v1"
+    # The provider API key. Preferred over `openrouter_api_key` (kept for backward
+    # compat); when both are set this one wins. Blank falls back to the OpenRouter key.
+    llm_api_key: str = ""
+    # ── OpenRouter (legacy key name — still honoured when `llm_api_key` is blank) ─
     openrouter_api_key: str = ""
     # LLM model ids — kept in env (DEFAULT_MODEL / COACH_MODEL), NOT hardcoded, so the
     # source never reveals which models we run. Blank here (nothing leaked to git);
@@ -324,7 +332,7 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _require_model_ids_when_ai_key_is_set(self) -> Self:
         guards.require_model_ids_when_ai_key_is_set(
-            self.openrouter_api_key, self.default_model, self.coach_model
+            self.effective_llm_api_key(), self.default_model, self.coach_model
         )
         return self
 
@@ -353,6 +361,15 @@ class Settings(BaseSettings):
         False ⇒ the pool falls back to the admin creds (`core/db` warns).
         """
         return bool(self.postgres_app_user)
+
+    def effective_llm_api_key(self) -> str:
+        """The provider key the LLM client should use.
+
+        `llm_api_key` wins when set (the provider-agnostic name); otherwise the
+        legacy `openrouter_api_key` is honoured so an existing OpenRouter deploy
+        keeps working with no env change. Blank means the AI layer is off.
+        """
+        return self.llm_api_key or self.openrouter_api_key
 
     def _conninfo(self, user: str, password: str) -> str:
         """libpq connection string for one identity — the ONE place it is formatted."""

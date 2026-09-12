@@ -96,6 +96,8 @@ _DEFAULTED_ENV_VARS = (
     "LOG_LEVEL",
     "API_HOST",
     "API_PORT",
+    "LLM_BASE_URL",
+    "LLM_API_KEY",
     "OPENROUTER_API_KEY",
     "DEFAULT_MODEL",
     "COACH_MODEL",

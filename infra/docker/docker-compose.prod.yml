@@ -80,9 +80,11 @@ services:
       PREMIUM_COACH_QUESTIONS: ${PREMIUM_COACH_QUESTIONS:-20}
       UPGRADE_URL: ${UPGRADE_URL:-}
       # LLM. The model ids are REQUIRED whenever the key is set: a blank id is
-      # forwarded to OpenRouter verbatim and comes back a 400. The API now REFUSES
+      # forwarded to the provider verbatim and comes back a 400. The API now REFUSES
       # TO START in that state (core/config) rather than serving a dead AI layer
       # behind a green /healthz.
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://openrouter.ai/api/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       DEFAULT_MODEL: ${DEFAULT_MODEL:-}
       COACH_MODEL: ${COACH_MODEL:-}
@@ -167,6 +169,8 @@ services:
       # The model ids are REQUIRED whenever the key is set — this container IS the
       # nightly chain, so a blank id 400s every recs/briefing run. The scheduler
       # refuses to start in that state, same as the api (core/config).
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://openrouter.ai/api/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       DEFAULT_MODEL: ${DEFAULT_MODEL:-}
       COACH_MODEL: ${COACH_MODEL:-}
