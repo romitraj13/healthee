@@ -93,6 +93,23 @@ def test_an_unconfigured_deployment_is_not_a_failure(
     get_settings.cache_clear()
 
 
+def test_a_non_openrouter_gateway_has_no_balance_to_read(
+    monkeypatch: pytest.MonkeyPatch, keyed: None
+) -> None:  # noqa: ARG001
+    """Ollama Cloud (or any non-OpenRouter gateway) has no `/credits` endpoint.
+
+    The probe must report UNCONFIGURED without touching the network — the balance is
+    not "fine", it is simply not a thing this provider reports, and the transport-health
+    signal is the real spend/outage signal there.
+    """
+    monkeypatch.setenv("LLM_BASE_URL", "https://ollama.com/v1")
+    get_settings.cache_clear()
+    calls = _respond(monkeypatch, _balance(200.0, 0.0))
+    assert credits.read_balance().status == credits.UNCONFIGURED
+    assert calls == [], "a non-OpenRouter gateway still called the credits endpoint"
+    get_settings.cache_clear()
+
+
 # ── the state machine an alert is built on ────────────────────────────────────
 
 

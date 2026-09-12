@@ -79,7 +79,7 @@ class Readiness(BaseModel):
 
 def _llm_readiness() -> LlmReadiness:
     """Read both LLM signals. Neither call spends a token; neither can raise."""
-    configured = bool(get_settings().openrouter_api_key.strip())
+    configured = bool(get_settings().effective_llm_api_key().strip())
     health = transport_health.snapshot()
     reading = credits.read_balance()
     return LlmReadiness(

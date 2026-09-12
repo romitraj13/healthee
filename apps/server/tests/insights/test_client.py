@@ -105,6 +105,7 @@ def provider_order(monkeypatch: pytest.MonkeyPatch) -> Any:
                 default_model=real.default_model,
                 coach_model=real.coach_model,
                 llm_provider_order=order,
+                llm_base_url=real.llm_base_url,
             ),
         )
 
@@ -149,6 +150,51 @@ def test_the_DEFAULT_tier_is_never_routed(provider_order: Any, configured_models
     provider_order("baidu/fp8,wafer/fast,reka/fp4,fireworks")
     client, fake = _client_with_fake()
     client.complete([{"role": "user", "content": "x"}], model="vendor-x/cheap-tier-1")
+    assert fake.chat.completions.kwargs is not None
+    assert "extra_body" not in fake.chat.completions.kwargs
+
+
+# ── non-OpenRouter gateways get no OpenRouter-only extras ───────────────────
+
+
+@pytest.fixture
+def ollama_base_url(monkeypatch: pytest.MonkeyPatch) -> Any:
+    """Point the client at a non-OpenRouter gateway (Ollama Cloud)."""
+
+    def _set() -> None:
+        real = client_module.get_settings()
+        monkeypatch.setattr(
+            client_module,
+            "get_settings",
+            lambda: SimpleNamespace(
+                default_model=real.default_model,
+                coach_model=real.coach_model,
+                llm_provider_order="baidu/fp8,wafer/fast",
+                llm_base_url="https://ollama.com/v1",
+            ),
+        )
+
+    return _set
+
+
+def test_a_non_openrouter_gateway_gets_no_x_title_header(
+    ollama_base_url: Any, configured_models: None
+) -> None:  # noqa: ARG001 — the fixture is the environment
+    """`X-Title` is an OpenRouter concept; Ollama Cloud must not receive it."""
+    ollama_base_url()
+    client, fake = _client_with_fake()
+    client.complete([{"role": "user", "content": "x"}], model=_SECRET_MODEL)
+    assert fake.chat.completions.kwargs is not None
+    assert "extra_headers" not in fake.chat.completions.kwargs
+
+
+def test_a_non_openrouter_gateway_gets_no_provider_routing(
+    ollama_base_url: Any, configured_models: None
+) -> None:  # noqa: ARG001 — the fixture is the environment
+    """Provider routing is OpenRouter-only; a gateway that ignores it must not get it."""
+    ollama_base_url()
+    client, fake = _client_with_fake()
+    client.complete([{"role": "user", "content": "x"}], model=_SECRET_MODEL)
     assert fake.chat.completions.kwargs is not None
     assert "extra_body" not in fake.chat.completions.kwargs
 

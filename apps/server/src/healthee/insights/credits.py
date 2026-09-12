@@ -58,6 +58,10 @@ from healthee.core.logging import get_logger
 log = get_logger(__name__)
 
 _CREDITS_URL = "https://openrouter.ai/api/v1/credits"
+# The OpenRouter base URL — the provider whose credits endpoint this module reads.
+# Kept in sync with `insights.client._OPENROUTER_BASE_URL`; a non-OpenRouter
+# `LLM_BASE_URL` means the balance probe has nothing to read and reports unconfigured.
+_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 _TIMEOUT_S = 8.0
 
 # How long one reading stands. Five minutes: long enough that a hammered `/readyz`
@@ -145,8 +149,19 @@ def read_balance(*, force: bool = False) -> CreditsReading:
 
 
 def _fetch() -> CreditsReading:
-    """One real call to the credits endpoint. Never raises; every failure is a reading."""
-    key = get_settings().openrouter_api_key.strip()
+    """One real call to the credits endpoint. Never raises; every failure is a reading.
+
+    The credits endpoint is an OpenRouter concept — a non-OpenRouter gateway (Ollama
+    Cloud, a local vLLM, …) has no ``/api/v1/credits`` to read, so the probe returns
+    ``UNCONFIGURED`` without touching the network. That is the honest state: the
+    balance is not \"fine\", it is simply not a thing this provider reports, and the
+    transport-health signal (dead key / repeated failures) is the real spend/outage
+    signal on such a provider.
+    """
+    settings = get_settings()
+    if settings.llm_base_url != _OPENROUTER_BASE_URL:
+        return CreditsReading(status=UNCONFIGURED, checked_at=datetime.now(tz=UTC))
+    key = settings.openrouter_api_key.strip()
     if not key:
         return CreditsReading(status=UNCONFIGURED, checked_at=datetime.now(tz=UTC))
     try:

@@ -1,9 +1,10 @@
-"""OpenRouter chat client (OpenAI-compatible API) — the ONE LLM transport.
+"""LLM chat client (OpenAI-compatible API) — the ONE LLM transport.
 
-OpenRouter exposes Anthropic / OpenAI / Google models behind a single
-OpenAI-compatible endpoint; we point the ``openai`` SDK at its base URL. Every
-LLM surface reaches this through the grounded-ask choke point (``grounded.py``),
-never directly (standards §2: "LLM access only via the grounded-ask choke point").
+The provider is any OpenAI-compatible gateway: OpenRouter by default, or a
+self-hosted / alternative endpoint (e.g. Ollama Cloud) via ``LLM_BASE_URL``. We
+point the ``openai`` SDK at that base URL. Every LLM surface reaches this through
+the grounded-ask choke point (``grounded.py``), never directly (standards §2:
+"LLM access only via the grounded-ask choke point").
 
 The API key is read once from ``core.config`` and never logged (standards
 §Errors: no secret ever reaches a log line). Neither is the MODEL ID: it is kept out of
@@ -142,9 +143,14 @@ class LLMClient(Protocol):
     ) -> ChatResponse: ...
 
 
-class OpenRouterClient:
-    """Real transport: the ``openai`` SDK pointed at OpenRouter. Constructed lazily
-    so importing this module never requires a key or touches the network."""
+class OpenAICompatClient:
+    """Real transport: the ``openai`` SDK pointed at the configured base URL.
+
+    Constructed lazily so importing this module never requires a key or touches
+    the network. The endpoint is ``settings.llm_base_url`` (OpenRouter by default,
+    any OpenAI-compatible gateway otherwise) and the key is
+    ``settings.effective_llm_api_key()``.
+    """
 
     def __init__(self) -> None:
         self._sdk: Any | None = None
@@ -159,13 +165,16 @@ class OpenRouterClient:
         """
         if self._sdk is None:
             settings = get_settings()
-            if not settings.openrouter_api_key:
-                raise RuntimeError("OPENROUTER_API_KEY is unset — LLM features are unavailable")
+            key = settings.effective_llm_api_key()
+            if not key:
+                raise RuntimeError(
+                    "LLM_API_KEY/OPENROUTER_API_KEY is unset — LLM features are unavailable"
+                )
             from openai import OpenAI  # local import: heavy SDK, only when a call happens
 
             self._sdk = OpenAI(
-                api_key=settings.openrouter_api_key,
-                base_url=_OPENROUTER_BASE_URL,
+                api_key=key,
+                base_url=settings.llm_base_url,
                 timeout=settings.llm_timeout_s,
                 max_retries=settings.llm_max_retries,
             )
@@ -208,15 +217,20 @@ class OpenRouterClient:
             "temperature": DEFAULT_TEMPERATURE,
             "top_p": DEFAULT_TOP_P,
             "max_tokens": DEFAULT_MAX_TOKENS,
-            "extra_headers": {"X-Title": "healthee"},
         }
         if tools:
             kwargs["tools"] = tools
         if response_format is not None:
             kwargs["response_format"] = response_format
-        provider = _provider_routing(model)
-        if provider is not None:
-            kwargs["extra_body"] = {**kwargs.get("extra_body", {}), "provider": provider}
+        # OpenRouter-only extras: the X-Title header and provider routing are
+        # OpenRouter concepts. A non-OpenRouter gateway (Ollama Cloud, a local
+        # vLLM, …) rejects or ignores them, so they are sent only when the base
+        # URL is actually OpenRouter's.
+        if get_settings().llm_base_url == _OPENROUTER_BASE_URL:
+            kwargs["extra_headers"] = {"X-Title": "healthee"}
+            provider = _provider_routing(model)
+            if provider is not None:
+                kwargs["extra_body"] = {**kwargs.get("extra_body", {}), "provider": provider}
         sdk = self._client()
         started = time.monotonic()
         try:
@@ -333,6 +347,11 @@ def _usage(raw: Any) -> Usage | None:
 
 
 @lru_cache(maxsize=1)
-def get_client() -> OpenRouterClient:
+def get_client() -> OpenAICompatClient:
     """Process-wide real client. ``grounded_ask`` defaults to this; tests pass a stub."""
-    return OpenRouterClient()
+    return OpenAICompatClient()
+
+
+# Backward-compatible alias: callers and tests that imported the old name keep
+# working. The class is provider-agnostic now; the alias is a name, not a behaviour.
+OpenRouterClient = OpenAICompatClient
