@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Healthee</string>
+	<string>Patronus</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -38,7 +38,7 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Healthee keeps recording your workout route with the screen off until you stop recording.</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array><string>codes.afk.healthee.pull</string><string>codes.afk.healthee.push</string></array>
+	<array><string>io.romit.patronus.pull</string><string>io.romit.patronus.push</string></array>
 	<key>UIBackgroundModes</key>
 	<array><string>location</string><string>bluetooth-central</string><string>fetch</string></array>
 	<key>UIApplicationSceneManifest</key>
